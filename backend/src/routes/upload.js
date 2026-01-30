@@ -22,14 +22,17 @@ const storage = multer.diskStorage({
     }
 });
 
-// File filter - only allow images
+// File filter - allow images and videos
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    const allowedTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif',
+        'video/mp4', 'video/webm', 'video/quicktime'
+    ];
 
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed.'), false);
+        cb(new Error('Invalid file type. Only images (JPEG, PNG, WebP, GIF) and videos (MP4, WebM, MOV) are allowed.'), false);
     }
 };
 
@@ -38,7 +41,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
+        fileSize: 50 * 1024 * 1024 // 50MB limit (increased for videos)
     }
 });
 
@@ -50,14 +53,41 @@ router.post('/product', authenticateToken, requireAdmin, upload.single('image'),
         }
 
         const imageUrl = `/uploads/products/${req.file.filename}`;
+        // Detect type
+        const type = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
+
         res.json({
-            message: 'Image uploaded successfully',
+            message: 'File uploaded successfully',
             imageUrl: imageUrl,
-            filename: req.file.filename
+            filename: req.file.filename,
+            type: type
         });
     } catch (error) {
-        console.error('Upload product image error:', error);
-        res.status(500).json({ error: 'Failed to upload image' });
+        console.error('Upload product file error:', error);
+        res.status(500).json({ error: 'Failed to upload file' });
+    }
+});
+
+// Upload multiple product files
+router.post('/product/multiple', authenticateToken, requireAdmin, upload.array('files', 10), (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: 'No files uploaded' });
+        }
+
+        const files = req.files.map(file => ({
+            url: `/uploads/products/${file.filename}`,
+            type: file.mimetype.startsWith('video/') ? 'video' : 'image',
+            filename: file.filename
+        }));
+
+        res.json({
+            message: 'Files uploaded successfully',
+            files: files
+        });
+    } catch (error) {
+        console.error('Upload multiple files error:', error);
+        res.status(500).json({ error: 'Failed to upload files' });
     }
 });
 

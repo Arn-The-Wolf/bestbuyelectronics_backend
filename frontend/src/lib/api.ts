@@ -84,7 +84,7 @@ export const productsApi = {
     if (filters?.search) params.append('search', filters.search);
     if (filters?.sort) params.append('sort', filters.sort);
     if (filters?.featured) params.append('featured', 'true');
-    
+
     const query = params.toString();
     return apiRequest<any[]>(`/products${query ? `?${query}` : ''}`);
   },
@@ -115,6 +115,12 @@ export const productsApi = {
     return apiRequest<void>(`/products/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  getRelated: async (id: string) => {
+    // Determine category or tags from the product ID logic (not implemented in backend yet, so fetching all or filtering client side)
+    // For now, let's just fetch featured or random.
+    return apiRequest<any[]>('/products/featured');
   },
 };
 
@@ -183,19 +189,19 @@ export const ordersApi = {
 
 // Reviews API
 export const reviewsApi = {
-  getAll: async () => {
-    return apiRequest<any[]>('/reviews');
+  create: async (data: { product_id: string; rating: number; comment?: string }) => {
+    return apiRequest<any>('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   getByProduct: async (productId: string) => {
     return apiRequest<any[]>(`/reviews/product/${productId}`);
   },
 
-  create: async (review: any) => {
-    return apiRequest<any>('/reviews', {
-      method: 'POST',
-      body: JSON.stringify(review),
-    });
+  getAll: async () => {
+    return apiRequest<any[]>('/reviews/all');
   },
 
   delete: async (id: string) => {
@@ -216,6 +222,17 @@ export const chatApi = {
       method: 'POST',
       body: JSON.stringify({ message, receiver_id: receiverId, is_from_admin: isFromAdmin }),
     });
+  },
+
+  markAsRead: async (senderId?: string) => {
+    return apiRequest<void>('/chat/mark-read', {
+      method: 'POST',
+      body: JSON.stringify({ sender_id: senderId }),
+    });
+  },
+
+  getUnreadCount: async () => {
+    return apiRequest<{ count: number }>('/chat/unread');
   },
 };
 

@@ -104,7 +104,17 @@ const Auth = () => {
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
+          variant: "success",
         });
+
+        // Check for redirect URL
+        const returnUrl = localStorage.getItem('redirect_after_login');
+        if (returnUrl) {
+          localStorage.removeItem('redirect_after_login');
+          navigate(returnUrl);
+          return;
+        }
+
         // Check if user is admin and redirect to admin dashboard
         try {
           const userData = await authApi.getCurrentUser();
@@ -121,6 +131,7 @@ const Auth = () => {
         toast({
           title: "Account created!",
           description: "Welcome to BestBuyElectronics!",
+          variant: "success",
         });
         // Check if user is admin and redirect to admin dashboard
         try {

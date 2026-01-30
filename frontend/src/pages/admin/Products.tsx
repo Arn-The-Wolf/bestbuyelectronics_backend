@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Trash2, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ImageUpload from "@/components/admin/ImageUpload";
+import MultiFileUpload from "@/components/admin/MultiFileUpload";
 
 export default function Products() {
     const [products, setProducts] = useState<any[]>([]);
@@ -22,7 +22,7 @@ export default function Products() {
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [newProduct, setNewProduct] = useState({
         name: "", description: "", price: "", discount_price: null, stock: "",
-        image_url: "", brand: "", category_id: null, is_featured: false
+        image_url: "", brand: "", category_id: null, is_featured: false, media: [] as any[]
     });
     const { toast } = useToast();
 
@@ -52,10 +52,10 @@ export default function Products() {
                 price: Number(newProduct.price) || 0,
                 stock: Number(newProduct.stock) || 0
             });
-            toast({ title: "Success", description: "Product added successfully!" });
+            toast({ title: "Success", description: "Product added successfully!", variant: "success" });
             setNewProduct({
                 name: "", description: "", price: "", discount_price: null, stock: "",
-                image_url: "", brand: "", category_id: null, is_featured: false
+                image_url: "", brand: "", category_id: null, is_featured: false, media: []
             });
             await loadData();
         } catch (error: any) {
@@ -67,7 +67,7 @@ export default function Products() {
         if (!editingProduct) return;
         try {
             await productsApi.update(editingProduct.id, editingProduct);
-            toast({ title: "Success", description: "Product updated successfully!" });
+            toast({ title: "Success", description: "Product updated successfully!", variant: "success" });
             setEditingProduct(null);
             setEditDialogOpen(false);
             await loadData();
@@ -80,7 +80,7 @@ export default function Products() {
         if (!confirm("Are you sure you want to delete this product?")) return;
         try {
             await productsApi.delete(id);
-            toast({ title: "Success", description: "Product deleted!" });
+            toast({ title: "Success", description: "Product deleted!", variant: "success" });
             await loadData();
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -110,8 +110,57 @@ export default function Products() {
                             <CardTitle>All Products ({products.length})</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0 sm:p-6">
-                            <ScrollArea className="w-full">
-                                <div className="min-w-[700px]">
+                            {/* Mobile Card View */}
+                            <div className="md:hidden space-y-3 p-4">
+                                {products.map((product) => (
+                                    <Card key={product.id} className="overflow-hidden">
+                                        <CardContent className="p-4">
+                                            <div className="flex gap-4">
+                                                <img
+                                                    src={product.image_url}
+                                                    alt={product.name}
+                                                    className="w-20 h-20 object-cover rounded flex-shrink-0"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-semibold text-base truncate">{product.name}</h3>
+                                                    <p className="text-sm text-slate-500 mt-1">{product.brand || "N/A"}</p>
+                                                    <div className="flex items-baseline gap-2 mt-2">
+                                                        <p className="text-xl font-bold text-blue-600">TSh {Number(product.price).toLocaleString()}</p>
+                                                        <p className="text-sm text-green-600 font-medium">Stock: {product.stock}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 mt-3 pt-3 border-t">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="flex-1"
+                                                    onClick={() => {
+                                                        setEditingProduct(product);
+                                                        setEditDialogOpen(true);
+                                                    }}
+                                                >
+                                                    <Edit className="h-4 w-4 mr-1" />
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    className="flex-1"
+                                                    onClick={() => deleteProduct(product.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-1" />
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+
+                            {/* Desktop Table View */}
+                            <div className="hidden md:block">
+                                <ScrollArea className="w-full">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
@@ -130,11 +179,11 @@ export default function Products() {
                                                         <img src={product.image_url} alt={product.name} className="w-12 h-12 object-cover rounded" />
                                                     </TableCell>
                                                     <TableCell className="font-medium">{product.name}</TableCell>
-                                                    <TableCell>{product.brand || "N/A"}</TableCell>
-                                                    <TableCell className="font-semibold whitespace-nowrap">
+                                                    <TableCell className="text-slate-600">{product.brand || "N/A"}</TableCell>
+                                                    <TableCell className="font-semibold text-blue-600 whitespace-nowrap">
                                                         TSh {Number(product.price).toLocaleString()}
                                                     </TableCell>
-                                                    <TableCell>{product.stock}</TableCell>
+                                                    <TableCell className="text-green-600 font-medium">{product.stock}</TableCell>
                                                     <TableCell className="space-x-2">
                                                         <Button
                                                             size="sm"
@@ -158,8 +207,8 @@ export default function Products() {
                                             ))}
                                         </TableBody>
                                     </Table>
-                                </div>
-                            </ScrollArea>
+                                </ScrollArea>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -224,11 +273,15 @@ export default function Products() {
                                     <Label htmlFor="featured">Featured Product</Label>
                                 </div>
                             </div>
-                            <ImageUpload
-                                uploadType="product"
-                                currentImage={newProduct.image_url}
-                                onUpload={(imageUrl) => setNewProduct({ ...newProduct, image_url: imageUrl })}
-                                label="Product Image"
+                            <MultiFileUpload
+                                currentFiles={newProduct.media}
+                                onUpload={(files) => {
+                                    setNewProduct({
+                                        ...newProduct,
+                                        media: files,
+                                        image_url: files.length > 0 ? files[0].url : ""
+                                    });
+                                }}
                             />
                             <Button onClick={addProduct} className="w-full" size="lg">Add Product</Button>
                         </CardContent>
@@ -292,11 +345,15 @@ export default function Products() {
                                     onChange={(e) => setEditingProduct({ ...editingProduct, stock: Number(e.target.value) })}
                                 />
                             </div>
-                            <ImageUpload
-                                uploadType="product"
-                                currentImage={editingProduct.image_url}
-                                onUpload={(imageUrl) => setEditingProduct({ ...editingProduct, image_url: imageUrl })}
-                                label="Product Image"
+                            <MultiFileUpload
+                                currentFiles={editingProduct.media || (editingProduct.image_url ? [{ type: 'image', url: editingProduct.image_url }] : [])}
+                                onUpload={(files) => {
+                                    setEditingProduct({
+                                        ...editingProduct,
+                                        media: files,
+                                        image_url: files.length > 0 ? files[0].url : ""
+                                    });
+                                }}
                             />
                             <Button onClick={updateProduct} className="w-full" size="lg">Update Product</Button>
                         </div>

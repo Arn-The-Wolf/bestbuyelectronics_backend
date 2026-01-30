@@ -76,12 +76,13 @@ router.get('/:id', async (req, res) => {
 // Create product (admin only)
 router.post('/', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { name, description, price, discount_price, stock, category_id, image_url, images, brand, specifications, is_featured } = req.body;
+    const { name, description, price, discount_price, stock, category_id, image_url, images, media, brand, specifications, is_featured } = req.body;
+
 
     const result = await db.query(
-      `INSERT INTO products (name, description, price, discount_price, stock, category_id, image_url, images, brand, specifications, is_featured)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-      [name, description, price, discount_price || null, stock || 0, category_id || null, image_url || null, images || null, brand || null, specifications || null, is_featured || false]
+      `INSERT INTO products (name, description, price, discount_price, stock, category_id, image_url, images, media, brand, specifications, is_featured)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [name, description, price, discount_price || null, stock || 0, category_id || null, image_url || null, images || null, media ? JSON.stringify(media) : null, brand || null, specifications ? JSON.stringify(specifications) : null, is_featured || false]
     );
 
     res.status(201).json(result.rows[0]);
@@ -94,14 +95,14 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
 // Update product (admin only)
 router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const { name, description, price, discount_price, stock, category_id, image_url, images, brand, specifications, is_featured } = req.body;
+    const { name, description, price, discount_price, stock, category_id, image_url, images, media, brand, specifications, is_featured } = req.body;
 
     const result = await db.query(
       `UPDATE products 
        SET name = $1, description = $2, price = $3, discount_price = $4, stock = $5, 
-           category_id = $6, image_url = $7, images = $8, brand = $9, specifications = $10, is_featured = $11
-       WHERE id = $12 RETURNING *`,
-      [name, description, price, discount_price || null, stock, category_id || null, image_url || null, images || null, brand || null, specifications || null, is_featured || false, req.params.id]
+           category_id = $6, image_url = $7, images = $8, media = $9, brand = $10, specifications = $11, is_featured = $12
+       WHERE id = $13 RETURNING *`,
+      [name, description, price, discount_price || null, stock, category_id || null, image_url || null, images || null, media ? JSON.stringify(media) : null, brand || null, specifications ? JSON.stringify(specifications) : null, is_featured || false, req.params.id]
     );
 
     if (result.rows.length === 0) {

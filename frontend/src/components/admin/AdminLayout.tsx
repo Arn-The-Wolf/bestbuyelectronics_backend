@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import { authApi } from "@/lib/api";
+import { Menu } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function AdminLayout() {
     const [isAdmin, setIsAdmin] = useState(false);
@@ -48,12 +51,35 @@ export default function AdminLayout() {
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50">
-            <AdminSidebar />
-            <main className="flex-1 overflow-y-auto">
-                <div className="container mx-auto p-6 md:p-8">
-                    <Outlet />
+            {/* Desktop Sidebar */}
+            <div className="hidden md:block h-full">
+                <AdminSidebar />
+            </div>
+
+            {/* Mobile Header & Content */}
+            <div className="flex-1 flex flex-col h-full overflow-hidden">
+                {/* Mobile Header */}
+                <div className="md:hidden border-b bg-white p-4 flex items-center gap-4">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <Menu className="h-6 w-6" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="p-0 border-r-0 w-64">
+                            <AdminSidebar className="border-none" />
+                        </SheetContent>
+                    </Sheet>
+                    <h1 className="font-bold text-lg">Admin Dashboard</h1>
                 </div>
-            </main>
+
+                {/* Main Content */}
+                <main className="flex-1 overflow-y-auto">
+                    <div className="container mx-auto p-4 md:p-8">
+                        <Outlet />
+                    </div>
+                </main>
+            </div>
         </div>
     );
 }

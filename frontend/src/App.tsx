@@ -9,6 +9,7 @@ import Cart from "./pages/Cart";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/AdminDashboard";
 import Orders from "./pages/admin/Orders";
@@ -32,41 +33,46 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+import SessionManager from "./components/SessionManager";
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/returns" element={<ReturnPolicy />} />
-          <Route path="/shipping" element={<Shipping />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="orders" element={<Orders />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="categories" element={<Categories />} />
-            <Route path="customers" element={<Customers />} />
-            <Route path="coupons" element={<Coupons />} />
-            <Route path="reviews" element={<Reviews />} />
-            <Route path="messages" element={<Messages />} />
-          </Route>
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <SessionManager>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/returns" element={<ReturnPolicy />} />
+            <Route path="/shipping" element={<Shipping />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="orders" element={<Orders />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="categories" element={<Categories />} />
+              <Route path="customers" element={<Customers />} />
+              <Route path="coupons" element={<Coupons />} />
+              <Route path="reviews" element={<Reviews />} />
+            </Route>
+            <Route path="/admin/messages" element={<Messages />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/order-confirmation/:id" element={<OrderConfirmation />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </SessionManager>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

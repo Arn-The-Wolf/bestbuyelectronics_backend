@@ -31,7 +31,7 @@ export default function Reviews() {
         if (!confirm("Are you sure you want to delete this review?")) return;
         try {
             await reviewsApi.delete(id);
-            toast({ title: "Success", description: "Review deleted!" });
+            toast({ title: "Success", description: "Review deleted!", variant: "success" });
             await loadReviews();
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -54,8 +54,60 @@ export default function Reviews() {
                     <CardTitle>Product Reviews ({reviews.length})</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 sm:p-6">
-                    <ScrollArea className="w-full">
-                        <div className="min-w-[800px]">
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-3 p-4">
+                        {reviews.map((review) => (
+                            <Card key={review.id} className="overflow-hidden">
+                                <CardContent className="p-4 space-y-3">
+                                    {/* Product and Rating */}
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs text-slate-500">Product</p>
+                                            <p className="font-semibold text-base text-blue-700 truncate">{review.product_name || review.products?.name || "N/A"}</p>
+                                        </div>
+                                        <div className="flex items-center gap-1 ml-2">
+                                            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                                            <span className="font-bold text-lg">{review.rating}</span>
+                                            <span className="text-slate-500 text-sm">/5</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Customer and Date */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <p className="text-xs text-slate-500">Customer</p>
+                                            <p className="text-sm font-medium">{review.full_name || review.profiles?.full_name || "Anonymous"}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500">Date</p>
+                                            <p className="text-sm">{new Date(review.created_at).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Comment */}
+                                    <div>
+                                        <p className="text-xs text-slate-500">Comment</p>
+                                        <p className="text-sm text-slate-700 mt-1 leading-relaxed">{review.comment || "No comment"}</p>
+                                    </div>
+
+                                    {/* Delete Button */}
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        className="w-full"
+                                        onClick={() => deleteReview(review.id)}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-1" />
+                                        Delete Review
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block">
+                        <ScrollArea className="w-full">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -70,7 +122,7 @@ export default function Reviews() {
                                 <TableBody>
                                     {reviews.map((review) => (
                                         <TableRow key={review.id}>
-                                            <TableCell className="font-medium">{review.product_name || review.products?.name || "N/A"}</TableCell>
+                                            <TableCell className="font-medium text-blue-700">{review.product_name || review.products?.name || "N/A"}</TableCell>
                                             <TableCell>{review.full_name || review.profiles?.full_name || "Anonymous"}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
@@ -93,8 +145,8 @@ export default function Reviews() {
                                     ))}
                                 </TableBody>
                             </Table>
-                        </div>
-                    </ScrollArea>
+                        </ScrollArea>
+                    </div>
                 </CardContent>
             </Card>
         </div>

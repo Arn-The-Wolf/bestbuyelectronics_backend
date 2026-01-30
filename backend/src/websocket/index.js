@@ -26,8 +26,21 @@ export function setupWebSocket(server) {
       ws.on('message', (message) => {
         try {
           const data = JSON.parse(message);
-          // Broadcast to all clients or specific receiver
-          broadcastMessage(data, decoded.userId);
+
+          if (data.type === 'typing') {
+            // Relay typing status to specific receiver
+            if (data.receiverId) {
+              const receiverWs = clients.get(data.receiverId);
+              if (receiverWs && receiverWs.readyState === 1) {
+                receiverWs.send(JSON.stringify({
+                  type: 'typing',
+                  senderId: decoded.userId,
+                  isTyping: data.isTyping
+                }));
+              }
+            }
+          }
+          // Potential for other message types here
         } catch (error) {
           console.error('Error processing message:', error);
         }

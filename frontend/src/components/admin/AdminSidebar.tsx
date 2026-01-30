@@ -65,7 +65,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ className }: { className?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -75,7 +75,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+    <div className={cn("flex h-full w-64 flex-col border-r bg-gradient-to-b from-slate-900 to-slate-800 text-white", className)}>
       {/* Logo/Brand */}
       <div className="flex h-16 items-center border-b border-slate-700 px-6">
         <Link to="/">

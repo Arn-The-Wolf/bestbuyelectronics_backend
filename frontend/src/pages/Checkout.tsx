@@ -98,7 +98,7 @@ const Checkout = () => {
           : "Your order will be delivered. Pay cash on delivery.",
       });
 
-      navigate("/profile");
+      navigate(`/order-confirmation/${order.id}`);
     } catch (error: any) {
       toast({
         title: "Error",

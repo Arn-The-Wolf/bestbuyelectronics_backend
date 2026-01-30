@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 export default function Coupons() {
     const [coupons, setCoupons] = useState<any[]>([]);
@@ -37,7 +38,7 @@ export default function Coupons() {
     const addCoupon = async () => {
         try {
             await couponsApi.create(newCoupon);
-            toast({ title: "Success", description: "Coupon added successfully!" });
+            toast({ title: "Success", description: "Coupon added successfully!", variant: "success" });
             setNewCoupon({
                 code: "", discount_percentage: 0, discount_amount: null, min_purchase_amount: 0,
                 max_uses: 0, valid_from: new Date().toISOString().split('T')[0], valid_until: ""
@@ -52,7 +53,7 @@ export default function Coupons() {
         if (!confirm("Are you sure you want to delete this coupon?")) return;
         try {
             await couponsApi.delete(id);
-            toast({ title: "Success", description: "Coupon deleted!" });
+            toast({ title: "Success", description: "Coupon deleted!", variant: "success" });
             await loadCoupons();
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -82,8 +83,68 @@ export default function Coupons() {
                             <CardTitle>All Coupons ({coupons.length})</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0 sm:p-6">
-                            <ScrollArea className="w-full">
-                                <div className="min-w-[900px]">
+                            {/* Mobile Card View */}
+                            <div className="md:hidden space-y-3 p-4">
+                                {coupons.map((coupon) => (
+                                    <Card key={coupon.id} className="overflow-hidden border-l-4" style={{ borderLeftColor: coupon.is_active ? '#22c55e' : '#94a3b8' }}>
+                                        <CardContent className="p-4 space-y-3">
+                                            {/* Code and Active Status */}
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="text-xs text-slate-500">Coupon Code</p>
+                                                    <p className="font-mono font-bold text-lg">{coupon.code}</p>
+                                                    <Badge className={`mt-1 text-xs ${coupon.is_active ? 'bg-green-100 text-green-800 border-green-200' : 'bg-slate-100 text-slate-800 border-slate-200'}`}>
+                                                        {coupon.is_active ? 'Active' : 'Inactive'}
+                                                    </Badge>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs text-slate-500">Discount</p>
+                                                    <p className="text-2xl font-bold text-blue-600">{coupon.discount_percentage}%</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Min Purchase and Max Uses */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <p className="text-xs text-slate-500">Min Purchase</p>
+                                                    <p className="text-sm font-semibold">TSh {Number(coupon.min_purchase_amount).toLocaleString()}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500">Max Uses</p>
+                                                    <p className="text-sm font-semibold">{coupon.max_uses || "Unlimited"}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Usage and Validity */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <p className="text-xs text-slate-500">Used Count</p>
+                                                    <p className="text-sm">{coupon.used_count || 0}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500">Valid Until</p>
+                                                    <p className="text-sm">{new Date(coupon.valid_until).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Delete Button */}
+                                            <Button
+                                                size="sm"
+                                                variant="destructive"
+                                                className="w-full"
+                                                onClick={() => deleteCoupon(coupon.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-1" />
+                                                Delete Coupon
+                                            </Button>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+
+                            {/* Desktop Table View */}
+                            <div className="hidden md:block">
+                                <ScrollArea className="w-full">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
@@ -101,12 +162,16 @@ export default function Coupons() {
                                             {coupons.map((coupon) => (
                                                 <TableRow key={coupon.id}>
                                                     <TableCell className="font-mono font-bold">{coupon.code}</TableCell>
-                                                    <TableCell>{coupon.discount_percentage}%</TableCell>
+                                                    <TableCell className="font-semibold text-blue-600">{coupon.discount_percentage}%</TableCell>
                                                     <TableCell>TSh {Number(coupon.min_purchase_amount).toLocaleString()}</TableCell>
                                                     <TableCell>{coupon.max_uses || "Unlimited"}</TableCell>
                                                     <TableCell>{coupon.used_count || 0}</TableCell>
                                                     <TableCell>{new Date(coupon.valid_until).toLocaleDateString()}</TableCell>
-                                                    <TableCell>{coupon.is_active ? "✓" : "✗"}</TableCell>
+                                                    <TableCell>
+                                                        <Badge className={`text-xs ${coupon.is_active ? 'bg-green-100 text-green-800 border-green-200' : 'bg-slate-100 text-slate-800 border-slate-200'}`}>
+                                                            {coupon.is_active ? 'Active' : 'Inactive'}
+                                                        </Badge>
+                                                    </TableCell>
                                                     <TableCell>
                                                         <Button
                                                             size="sm"
@@ -120,8 +185,8 @@ export default function Coupons() {
                                             ))}
                                         </TableBody>
                                     </Table>
-                                </div>
-                            </ScrollArea>
+                                </ScrollArea>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -142,7 +207,7 @@ export default function Coupons() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <Label>Discount Percentage (%)</Label>
-                                    <Input type="number" min="0" max="100" value={newCoupon.discount_percentage} onChange={(e) => setNewCoupon({ ...newCoupon, discount_percentage: Number(e.target.value) })} placeholder="20" />
+                                    <Input type="number" min="0" max="100" value={newCoupon.discount_percentage || ""} onChange={(e) => setNewCoupon({ ...newCoupon, discount_percentage: Number(e.target.value) || 0 })} placeholder="20" />
                                 </div>
                                 <div>
                                     <Label>Discount Amount (TSh) - Optional</Label>
@@ -152,11 +217,11 @@ export default function Coupons() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <Label>Min Purchase (TSh)</Label>
-                                    <Input type="number" min="0" value={newCoupon.min_purchase_amount} onChange={(e) => setNewCoupon({ ...newCoupon, min_purchase_amount: Number(e.target.value) })} placeholder="0" />
+                                    <Input type="number" min="0" value={newCoupon.min_purchase_amount || ""} onChange={(e) => setNewCoupon({ ...newCoupon, min_purchase_amount: Number(e.target.value) || 0 })} placeholder="0" />
                                 </div>
                                 <div>
                                     <Label>Max Uses (0 = unlimited)</Label>
-                                    <Input type="number" min="0" value={newCoupon.max_uses} onChange={(e) => setNewCoupon({ ...newCoupon, max_uses: Number(e.target.value) })} placeholder="0" />
+                                    <Input type="number" min="0" value={newCoupon.max_uses || ""} onChange={(e) => setNewCoupon({ ...newCoupon, max_uses: Number(e.target.value) || 0 })} placeholder="0" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

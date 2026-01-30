@@ -63,7 +63,7 @@ const Profile = () => {
 
     try {
       await profilesApi.update(updates);
-      toast({ title: "Success", description: "Profile updated successfully!" });
+      toast({ title: "Success", description: "Profile updated successfully!", variant: "success" });
       await loadProfile();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

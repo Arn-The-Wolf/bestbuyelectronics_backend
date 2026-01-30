@@ -39,7 +39,7 @@ export default function Categories() {
     const addCategory = async () => {
         try {
             await categoriesApi.create(newCategory);
-            toast({ title: "Success", description: "Category added successfully!" });
+            toast({ title: "Success", description: "Category added successfully!", variant: "success" });
             // Reset form including image
             setNewCategory({ name: "", description: "", image_url: "" });
             await loadCategories();
@@ -52,7 +52,7 @@ export default function Categories() {
         if (!editingCategory) return;
         try {
             await categoriesApi.update(editingCategory.id, editingCategory);
-            toast({ title: "Success", description: "Category updated successfully!" });
+            toast({ title: "Success", description: "Category updated successfully!", variant: "success" });
             setEditingCategory(null);
             setCategoryDialogOpen(false);
             await loadCategories();
@@ -65,7 +65,7 @@ export default function Categories() {
         if (!confirm("Are you sure you want to delete this category?")) return;
         try {
             await categoriesApi.delete(id);
-            toast({ title: "Success", description: "Category deleted!" });
+            toast({ title: "Success", description: "Category deleted!", variant: "success" });
             await loadCategories();
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -95,8 +95,55 @@ export default function Categories() {
                             <CardTitle>All Categories ({categories.length})</CardTitle>
                         </CardHeader>
                         <CardContent className="p-0 sm:p-6">
-                            <ScrollArea className="w-full">
-                                <div className="min-w-[600px]">
+                            {/* Mobile Card View */}
+                            <div className="md:hidden space-y-3 p-4">
+                                {categories.map((category) => (
+                                    <Card key={category.id} className="overflow-hidden">
+                                        <CardContent className="p-4">
+                                            <div className="flex gap-4">
+                                                {category.image_url && (
+                                                    <img
+                                                        src={category.image_url}
+                                                        alt={category.name}
+                                                        className="w-20 h-20 object-cover rounded flex-shrink-0"
+                                                    />
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-semibold text-base text-blue-700 truncate">{category.name}</h3>
+                                                    <p className="text-sm text-slate-600 mt-1 line-clamp-2">{category.description || "N/A"}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 mt-3 pt-3 border-t">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="flex-1"
+                                                    onClick={() => {
+                                                        setEditingCategory(category);
+                                                        setCategoryDialogOpen(true);
+                                                    }}
+                                                >
+                                                    <Edit className="h-4 w-4 mr-1" />
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    className="flex-1"
+                                                    onClick={() => deleteCategory(category.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-1" />
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+
+                            {/* Desktop Table View */}
+                            <div className="hidden md:block">
+                                <ScrollArea className="w-full">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
@@ -114,7 +161,7 @@ export default function Categories() {
                                                             <img src={category.image_url} alt={category.name} className="w-12 h-12 object-cover rounded" />
                                                         )}
                                                     </TableCell>
-                                                    <TableCell className="font-medium">{category.name}</TableCell>
+                                                    <TableCell className="font-medium text-blue-700">{category.name}</TableCell>
                                                     <TableCell>{category.description || "N/A"}</TableCell>
                                                     <TableCell className="space-x-2">
                                                         <Button
@@ -139,8 +186,8 @@ export default function Categories() {
                                             ))}
                                         </TableBody>
                                     </Table>
-                                </div>
-                            </ScrollArea>
+                                </ScrollArea>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

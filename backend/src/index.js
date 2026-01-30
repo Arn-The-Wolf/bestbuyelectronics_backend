@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import productsRoutes from './routes/products.js';
 import categoriesRoutes from './routes/categories.js';
 import ordersRoutes from './routes/orders.js';
+
 import reviewsRoutes from './routes/reviews.js';
 import chatRoutes from './routes/chat.js';
 import couponsRoutes from './routes/coupons.js';

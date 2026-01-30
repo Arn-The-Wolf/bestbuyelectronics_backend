@@ -18,6 +18,7 @@ interface Product {
   discount_price: number | null;
   image_url: string | null;
   images: string[] | null;
+  media?: Array<{ type: 'image' | 'video'; url: string }>;
   stock: number;
   brand: string | null;
   specifications: any;
@@ -140,31 +141,91 @@ const ProductDetail = () => {
     ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
     : 0;
 
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    if (product) {
+      loadRelated();
+    }
+  }, [product]);
+
+  const loadRelated = async () => {
+    if (!product) return;
+    try {
+      // getRelated returns featured for now, but in real app would filter
+      const data = await productsApi.getRelated(product.id);
+      // Filter out current product
+      setRelatedProducts(data.filter(p => p.id !== product.id).slice(0, 4));
+    } catch (e) {
+      console.error("Error loading related products", e);
+    }
+  }
+
+  // Combine legacy image and new media
+  const mediaItems = product.media && Array.isArray(product.media) && product.media.length > 0
+    ? product.media
+    : product.image_url
+      ? [{ type: 'image', url: product.image_url }]
+      : [];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-12">
-          <div>
-            <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-4">
-              {product.image_url ? (
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
+          {/* Media Gallery */}
+          <div className="space-y-4">
+            <div className="aspect-square bg-muted rounded-lg overflow-hidden relative group">
+              {mediaItems.length > 0 ? (
+                mediaItems[activeImageIndex].type === 'video' ? (
+                  <video
+                    src={mediaItems[activeImageIndex].url}
+                    className="w-full h-full object-cover"
+                    controls
+                  />
+                ) : (
+                  <img
+                    src={mediaItems[activeImageIndex].url}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                )
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ShoppingCart className="h-32 w-32 text-muted-foreground" />
                 </div>
               )}
+
+              {/* Carousel Arrows could go here */}
             </div>
+
+            {/* Thumbnails */}
+            {mediaItems.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                {mediaItems.map((item: any, index: number) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`relative h-20 w-20 flex-shrink-0 rounded-md overflow-hidden border-2 ${activeImageIndex === index ? 'border-primary' : 'border-transparent'}`}
+                  >
+                    {item.type === 'video' ? (
+                      <div className="w-full h-full bg-slate-900 flex items-center justify-center text-white">
+                        <span className="text-xs">Video</span>
+                      </div>
+                    ) : (
+                      <img src={item.url} alt="" className="w-full h-full object-cover" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
             <h1 className="text-2xl md:text-3xl font-bold mb-4">{product.name}</h1>
-
+            {/* ... Rest of existing details inputs ... */}
             {product.brand && (
               <p className="text-muted-foreground mb-4">Brand: {product.brand}</p>
             )}
@@ -251,7 +312,8 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        <div className="max-w-4xl">
+        {/* Reviews Section (Keep Existing) */}
+        <div className="max-w-4xl mb-16">
           <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
 
           {user && (
@@ -328,6 +390,28 @@ const ProductDetail = () => {
             )}
           </div>
         </div>
+
+        {/* Related Products Section */}
+        {relatedProducts.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {relatedProducts.map(rp => (
+                <div key={rp.id} onClick={() => navigate(`/products/${rp.id}`)} className="cursor-pointer group">
+                  <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-3">
+                    {rp.image_url ? (
+                      <img src={rp.image_url} alt={rp.name} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><ShoppingCart className="text-muted-foreground" /></div>
+                    )}
+                  </div>
+                  <h3 className="font-medium truncate">{rp.name}</h3>
+                  <p className="text-primary font-bold">TSh {rp.price.toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

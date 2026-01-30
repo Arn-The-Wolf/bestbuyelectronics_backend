@@ -3,7 +3,7 @@ import { ShoppingCart, User, Search, Menu, MessageCircle, X } from "lucide-react
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useEffect, useState } from "react";
-import { authApi } from "@/lib/api";
+import { authApi, chatApi } from "@/lib/api";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,13 +28,12 @@ const Navbar = ({ cartItemsCount = 0 }: NavbarProps) => {
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Use global store for cart count, fallback to prop if store is empty (though store should be source of truth)
+  // Use global store for cart count, fallback to prop if store is empty
   const storeCartCount = useCartStore((state) => state.getCartCount());
-  // Prioritize store count if it has hydration, but keep prop for now if needed. 
-  // Actually, we want to rely on store.
   const displayCartCount = storeCartCount;
 
   const navLinks = [
@@ -49,7 +48,10 @@ const Navbar = ({ cartItemsCount = 0 }: NavbarProps) => {
   useEffect(() => {
     checkUser();
     // Poll for auth changes every 5 seconds
-    const interval = setInterval(checkUser, 5000);
+    const interval = setInterval(() => {
+      checkUser();
+      checkUnread();
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -60,9 +62,19 @@ const Navbar = ({ cartItemsCount = 0 }: NavbarProps) => {
       // Check if user has admin role
       const role = data.user?.role;
       setIsAdmin(role === 'admin');
+      if (data.user) checkUnread();
     } catch (error) {
       setUser(null);
       setIsAdmin(false);
+    }
+  };
+
+  const checkUnread = async () => {
+    try {
+      const data = await chatApi.getUnreadCount();
+      setUnreadChatCount(data.count);
+    } catch (error) {
+      // console.error('Error unread chat');
     }
   };
 
@@ -70,6 +82,7 @@ const Navbar = ({ cartItemsCount = 0 }: NavbarProps) => {
     authApi.logout();
     setUser(null);
     setIsAdmin(false);
+    setUnreadChatCount(0);
     toast({
       title: "Logged out",
       description: "You have been logged out successfully.",
@@ -115,8 +128,14 @@ const Navbar = ({ cartItemsCount = 0 }: NavbarProps) => {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/chat")}
+                className="relative"
               >
                 <MessageCircle className="h-5 w-5" />
+                {unreadChatCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-green-600 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                    {unreadChatCount}
+                  </span>
+                )}
               </Button>
             )}
 
@@ -189,7 +208,9 @@ const Navbar = ({ cartItemsCount = 0 }: NavbarProps) => {
                   {user && (
                     <>
                       <Button variant="ghost" onClick={() => { navigate("/profile"); setMobileMenuOpen(false); }} className="justify-start">My Profile</Button>
-                      <Button variant="ghost" onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }} className="justify-start">Admin</Button>
+                      {isAdmin && (
+                        <Button variant="ghost" onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }} className="justify-start">Admin</Button>
+                      )}
                       <Button variant="ghost" onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="justify-start">Logout</Button>
                     </>
                   )}
