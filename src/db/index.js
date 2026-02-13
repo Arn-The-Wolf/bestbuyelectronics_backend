@@ -14,63 +14,36 @@ const { Pool } = pg;
 // Validate DATABASE_URL
 if (!process.env.DATABASE_URL) {
   console.error('❌ ERROR: DATABASE_URL is not set in .env file');
-  console.error('Please create a .env file in the backend directory with:');
-  console.error('DATABASE_URL=postgresql://postgres@localhost:5432/tanzania_tech_nexus');
-  console.error('(Add password if needed: postgresql://postgres:password@localhost:5432/tanzania_tech_nexus)');
   process.exit(1);
 }
-
-import { promises as dns } from 'dns';
-
-/* ... imports ... */
 
 // Check if we're connecting to Supabase
 const isSupabase = process.env.DATABASE_URL?.includes('supabase.co');
 const isProduction = process.env.NODE_ENV === 'production';
 
-let connectionConfig = {
+// Configuration for database connection
+const connectionConfig = {
   connectionString: process.env.DATABASE_URL,
-  ssl: (isProduction || isSupabase) ? { rejectUnauthorized: false } : false
-};
-
-// Force IPv4 for Supabase/Production to avoid ENETUNREACH (IPv6 issues)
-if (process.env.DATABASE_URL) {
-  try {
-    const url = new URL(process.env.DATABASE_URL);
-    if (url.hostname && !url.hostname.match(/^(\d{1,3}\.){3}\d{1,3}$/)) {
-      // It's a hostname, resolve to IPv4
-      console.log(`Resolving hostname ${url.hostname} to IPv4...`);
-      // Use dns.lookup which uses the system resolver (getaddrinfo) instead of network DNS
-      // This is more reliable in container environments and handles /etc/hosts etc.
-      const { address } = await dns.lookup(url.hostname, { family: 4 });
-
-      if (address) {
-        console.log(`Resolved to: ${address}`);
-        const originalHost = url.hostname;
-        url.hostname = address;
-        connectionConfig.connectionString = url.toString();
-        // Preserve SNI for SSL
-        if (connectionConfig.ssl) {
-          connectionConfig.ssl.servername = originalHost;
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('DNS Resolution failed (falling back to original connection string):', e.message);
-  }
-}
-
-// Debug logging
-if (process.env.DATABASE_URL) {
-  /* ... logging code ... */
-}
-
-const pool = new Pool({
-  ...connectionConfig,
+  // Supabase requires SSL, so we force it even if NODE_ENV is not set to production
+  ssl: (isProduction || isSupabase) ? { rejectUnauthorized: false } : false,
+  // Connection pool settings
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
-});
+};
+
+// Debug logging for connection (masking password)
+if (process.env.DATABASE_URL) {
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    console.log(`Attempting to connect to database at: ${url.host} (Protocol: ${url.protocol})`);
+    console.log(`SSL Enabled: ${!!connectionConfig.ssl}`);
+  } catch (e) {
+    console.log('Attempting to connect to database (URL parsing failed, might be valid string)');
+  }
+}
+
+const pool = new Pool(connectionConfig);
 
 // Test connection
 pool.on('connect', () => {
@@ -104,15 +77,13 @@ const db = {
         console.error('2. Verify PostgreSQL username and password are correct');
         console.error('3. Make sure PostgreSQL is running');
         console.error('4. Ensure the database "tanzania_tech_nexus" exists');
-        console.error('\nExample DATABASE_URL format:');
-        console.error('DATABASE_URL=postgresql://postgres:password@localhost:5432/tanzania_tech_nexus');
       } else if (error.code === '3D000') {
         console.error('\n💡 Database does not exist. Create it with:');
         console.error('psql -U postgres -c "CREATE DATABASE tanzania_tech_nexus;"');
-      } else if (error.code === 'ECONNREFUSED') {
-        console.error('\n💡 Cannot connect to PostgreSQL. Make sure:');
-        console.error('1. PostgreSQL service is running');
-        console.error('2. PostgreSQL is listening on port 5432');
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ENETUNREACH') {
+        console.error('\n💡 Network Error. Make sure:');
+        console.error('1. PostgreSQL service is running and accessible');
+        console.error('2. If using Supabase on Render, use the connection pooler (port 6543) for IPv4 support');
       }
 
       throw error;
@@ -393,4 +364,3 @@ async function runMigrations() {
 }
 
 export default db;
-
