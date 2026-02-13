@@ -40,11 +40,14 @@ if (process.env.DATABASE_URL) {
     if (url.hostname && !url.hostname.match(/^(\d{1,3}\.){3}\d{1,3}$/)) {
       // It's a hostname, resolve to IPv4
       console.log(`Resolving hostname ${url.hostname} to IPv4...`);
-      const addresses = await dns.resolve4(url.hostname);
-      if (addresses && addresses[0]) {
-        console.log(`Resolved to: ${addresses[0]}`);
+      // Use dns.lookup which uses the system resolver (getaddrinfo) instead of network DNS
+      // This is more reliable in container environments and handles /etc/hosts etc.
+      const { address } = await dns.lookup(url.hostname, { family: 4 });
+
+      if (address) {
+        console.log(`Resolved to: ${address}`);
         const originalHost = url.hostname;
-        url.hostname = addresses[0];
+        url.hostname = address;
         connectionConfig.connectionString = url.toString();
         // Preserve SNI for SSL
         if (connectionConfig.ssl) {
