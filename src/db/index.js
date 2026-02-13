@@ -20,10 +20,25 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const pool = new Pool({
+const isProduction = process.env.NODE_ENV === 'production';
+
+const connectionConfig = {
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+  ssl: isProduction ? { rejectUnauthorized: false } : false
+};
+
+// Debug logging for connection (masking password)
+if (process.env.DATABASE_URL) {
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    console.log(`Attempting to connect to database at: ${url.host} (Protocol: ${url.protocol})`);
+    console.log(`SSL Enabled: ${!!connectionConfig.ssl}`);
+  } catch (e) {
+    console.log('Attempting to connect to database (URL parsing failed, might be valid string)');
+  }
+}
+
+const pool = new Pool(connectionConfig);
 
 // Test connection
 pool.on('connect', () => {
