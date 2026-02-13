@@ -41,7 +41,13 @@ if (process.env.DATABASE_URL) {
   }
 }
 
-const pool = new Pool(connectionConfig);
+// Merge config with defaults and force IPv4
+const pool = new Pool({
+  ...connectionConfig,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+});
 
 // Test connection
 pool.on('connect', () => {
