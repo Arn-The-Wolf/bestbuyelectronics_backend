@@ -20,11 +20,14 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+// Check if we're connecting to Supabase (hostname contains supabase.co)
+// Supabase requires SSL, so we force it even if NODE_ENV is not set to production
+const isSupabase = process.env.DATABASE_URL?.includes('supabase.co');
 const isProduction = process.env.NODE_ENV === 'production';
 
 const connectionConfig = {
   connectionString: process.env.DATABASE_URL,
-  ssl: isProduction ? { rejectUnauthorized: false } : false
+  ssl: (isProduction || isSupabase) ? { rejectUnauthorized: false } : false
 };
 
 // Debug logging for connection (masking password)
