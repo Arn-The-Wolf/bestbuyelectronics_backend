@@ -20,28 +20,48 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-// Check if we're connecting to Supabase (hostname contains supabase.co)
-// Supabase requires SSL, so we force it even if NODE_ENV is not set to production
+import { promises as dns } from 'dns';
+
+/* ... imports ... */
+
+// Check if we're connecting to Supabase
 const isSupabase = process.env.DATABASE_URL?.includes('supabase.co');
 const isProduction = process.env.NODE_ENV === 'production';
 
-const connectionConfig = {
+let connectionConfig = {
   connectionString: process.env.DATABASE_URL,
   ssl: (isProduction || isSupabase) ? { rejectUnauthorized: false } : false
 };
 
-// Debug logging for connection (masking password)
+// Force IPv4 for Supabase/Production to avoid ENETUNREACH (IPv6 issues)
 if (process.env.DATABASE_URL) {
   try {
     const url = new URL(process.env.DATABASE_URL);
-    console.log(`Attempting to connect to database at: ${url.host} (Protocol: ${url.protocol})`);
-    console.log(`SSL Enabled: ${!!connectionConfig.ssl}`);
+    if (url.hostname && !url.hostname.match(/^(\d{1,3}\.){3}\d{1,3}$/)) {
+      // It's a hostname, resolve to IPv4
+      console.log(`Resolving hostname ${url.hostname} to IPv4...`);
+      const addresses = await dns.resolve4(url.hostname);
+      if (addresses && addresses[0]) {
+        console.log(`Resolved to: ${addresses[0]}`);
+        const originalHost = url.hostname;
+        url.hostname = addresses[0];
+        connectionConfig.connectionString = url.toString();
+        // Preserve SNI for SSL
+        if (connectionConfig.ssl) {
+          connectionConfig.ssl.servername = originalHost;
+        }
+      }
+    }
   } catch (e) {
-    console.log('Attempting to connect to database (URL parsing failed, might be valid string)');
+    console.warn('DNS Resolution failed (falling back to original connection string):', e.message);
   }
 }
 
-// Merge config with defaults and force IPv4
+// Debug logging
+if (process.env.DATABASE_URL) {
+  /* ... logging code ... */
+}
+
 const pool = new Pool({
   ...connectionConfig,
   max: 20,
