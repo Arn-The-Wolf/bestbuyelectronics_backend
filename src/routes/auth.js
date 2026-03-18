@@ -6,6 +6,76 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /auth/signup:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "+255123456789"
+ *                 description: Full phone number with country code
+ *               countryCode:
+ *                 type: string
+ *                 example: "+255"
+ *                 description: Country code (alternative to full phone)
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "123456789"
+ *                 description: Phone number without country code
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 example: "password123"
+ *               confirmPassword:
+ *                 type: string
+ *                 example: "password123"
+ *               fullName:
+ *                 type: string
+ *                 example: "John Doe"
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User created successfully"
+ *                 token:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     phone:
+ *                       type: string
+ *                       example: "+255123456789"
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ */
+
 // Register
 router.post('/signup', async (req, res) => {
   try {
@@ -99,6 +169,56 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "+255123456789"
+ *               countryCode:
+ *                 type: string
+ *                 example: "+255"
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "123456789"
+ *               password:
+ *                 type: string
+ *                 example: "password123"
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Login successful"
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 // Login
 router.post('/login', async (req, res) => {
   try {
@@ -182,6 +302,37 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/User'
+ *                     - $ref: '#/components/schemas/Profile'
+ *                     - type: object
+ *                       properties:
+ *                         role:
+ *                           type: string
+ *                           enum: [admin, customer]
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: User not found
+ */
 
 // Get current user
 router.get('/me', authenticateToken, async (req, res) => {

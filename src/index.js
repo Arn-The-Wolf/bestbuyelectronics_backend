@@ -17,6 +17,7 @@ import profilesRoutes from './routes/profiles.js';
 import adminRoutes from './routes/admin.js';
 import uploadRoutes from './routes/upload.js';
 import { setupWebSocket } from './websocket/index.js';
+import { specs, swaggerUi } from './swagger/swagger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,6 +37,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Tanzania Tech Nexus API Documentation'
+}));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -70,6 +77,7 @@ setupWebSocket(server);
 // Start server immediately to satisfy Render's port binding requirement
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`📚 API Documentation available at: http://localhost:${PORT}/api-docs`);
 
   // Initialize database after server starts
   db.init().then(() => {
