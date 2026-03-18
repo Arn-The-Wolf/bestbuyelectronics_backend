@@ -14,16 +14,36 @@ const { Pool } = pg;
 // Validate DATABASE_URL
 if (!process.env.DATABASE_URL) {
   console.error('❌ ERROR: DATABASE_URL is not set in .env file');
-  console.error('Please create a .env file in the backend directory with:');
-  console.error('DATABASE_URL=postgresql://postgres@localhost:5432/tanzania_tech_nexus');
-  console.error('(Add password if needed: postgresql://postgres:password@localhost:5432/tanzania_tech_nexus)');
   process.exit(1);
 }
 
-const pool = new Pool({
+// Check if we're connecting to Supabase
+const isSupabase = process.env.DATABASE_URL?.includes('supabase.co');
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Configuration for database connection
+const connectionConfig = {
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+  // Supabase requires SSL, so we force it even if NODE_ENV is not set to production
+  ssl: (isProduction || isSupabase) ? { rejectUnauthorized: false } : false,
+  // Connection pool settings
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+};
+
+// Debug logging for connection (masking password)
+if (process.env.DATABASE_URL) {
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    console.log(`Attempting to connect to database at: ${url.host} (Protocol: ${url.protocol})`);
+    console.log(`SSL Enabled: ${!!connectionConfig.ssl}`);
+  } catch (e) {
+    console.log('Attempting to connect to database (URL parsing failed, might be valid string)');
+  }
+}
+
+const pool = new Pool(connectionConfig);
 
 // Test connection
 pool.on('connect', () => {
@@ -57,15 +77,13 @@ const db = {
         console.error('2. Verify PostgreSQL username and password are correct');
         console.error('3. Make sure PostgreSQL is running');
         console.error('4. Ensure the database "tanzania_tech_nexus" exists');
-        console.error('\nExample DATABASE_URL format:');
-        console.error('DATABASE_URL=postgresql://postgres:password@localhost:5432/tanzania_tech_nexus');
       } else if (error.code === '3D000') {
         console.error('\n💡 Database does not exist. Create it with:');
         console.error('psql -U postgres -c "CREATE DATABASE tanzania_tech_nexus;"');
-      } else if (error.code === 'ECONNREFUSED') {
-        console.error('\n💡 Cannot connect to PostgreSQL. Make sure:');
-        console.error('1. PostgreSQL service is running');
-        console.error('2. PostgreSQL is listening on port 5432');
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ENETUNREACH') {
+        console.error('\n💡 Network Error. Make sure:');
+        console.error('1. PostgreSQL service is running and accessible');
+        console.error('2. If using Supabase on Render, use the connection pooler (port 6543) for IPv4 support');
       }
 
       throw error;
@@ -346,4 +364,3 @@ async function runMigrations() {
 }
 
 export default db;
-

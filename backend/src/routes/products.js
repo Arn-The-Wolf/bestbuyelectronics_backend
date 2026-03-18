@@ -5,6 +5,47 @@ import { requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /products:
+ *   get:
+ *     summary: Get all products with optional filters
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category ID
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search products by name
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [price_asc, price_desc, name_asc, name_desc, newest]
+ *         description: Sort products
+ *       - in: query
+ *         name: featured
+ *         schema:
+ *           type: boolean
+ *         description: Filter featured products only
+ *     responses:
+ *       200:
+ *         description: List of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ *       500:
+ *         description: Server error
+ */
+
 // Get all products (with optional filters)
 router.get('/', async (req, res) => {
   try {
