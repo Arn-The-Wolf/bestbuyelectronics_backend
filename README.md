@@ -1,130 +1,78 @@
-# Backend Setup Instructions
+# 🚀 Tanzania Tech Nexus - Backend API
 
-## Prerequisites
-- Node.js (v18 or higher)
-- PostgreSQL database
+Node.js backend for Tanzania Tech Nexus e-commerce platform with comprehensive Swagger documentation.
 
-## Installation
+## 📚 API Documentation
 
-1. Install dependencies:
-```bash
-cd backend
-npm install
+**Interactive Swagger UI:** `/api-docs`
+- **Local:** http://localhost:3001/api-docs
+- **Production:** https://your-backend-url.onrender.com/api-docs
+
+## 🚀 Quick Deploy to Render
+
+### 1. Deploy Backend
+1. Go to [Render Dashboard](https://dashboard.render.com/)
+2. Click "New +" → "Web Service"
+3. Connect this GitHub repository: `bestbuyelectronics_backend`
+4. Configure:
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+   - **Node Version:** 18+
+
+### 2. Environment Variables
+Add these in Render dashboard:
+
+```env
+NODE_ENV=production
+PORT=10000
+JWT_SECRET=7ab8a91c942927526d4213a76b992e11416d34f048d6353ff816f9d6e951
+SUPABASE_URL=https://oskmwettgeiejhhjtxym.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9za213ZXR0Z2VpZWpoaGp0eHltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDAzNzEsImV4cCI6MjA4NjMxNjM3MX0.qBBGHEiIy27K7AAdGaIlarx54gizkw41gEmB2HSIR5I
+SUPABASE_SERVICE_ROLE_KEY=5b96a2b7-7673-44ed-b7bb-7d22378fa4d2
+DATABASE_URL=postgresql://postgres:Arn1122wolf!@db.oskmwettgeiejhhjtxym.supabase.co:5432/postgres
+FRONTEND_URL=https://your-frontend-url.vercel.app
 ```
 
-2. **Configure the `.env` file**:
-   - A `.env` file has been created in the `backend` directory
-   - The default configuration uses PostgreSQL without a password
-   - The file should look like this:
-   ```env
-   PORT=3001
-   DATABASE_URL=postgresql://postgres@localhost:5432/tanzania_tech_nexus
-   JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-   NODE_ENV=development
-   FRONTEND_URL=http://localhost:5173
-   ```
-   
-   **If you have a PostgreSQL password**, update the `DATABASE_URL` to include it:
-   ```env
-   DATABASE_URL=postgresql://postgres:your_password@localhost:5432/tanzania_tech_nexus
-   ```
-   
-   **Note**: 
-   - If your PostgreSQL username is different from `postgres`, replace it in the connection string
-   - If you don't have a password (default Windows PostgreSQL setup), the connection string without password (as shown above) will work
+### 3. Deploy
+- Click "Create Web Service"
+- Wait for deployment (3-5 minutes)
+- Copy your backend URL
 
-3. Set up PostgreSQL:
+## 🔧 Local Development
 
-   **Option A: Using PostgreSQL locally**
-   - Install PostgreSQL if not already installed
-   - Create the database:
-   ```sql
-   CREATE DATABASE tanzania_tech_nexus;
-   ```
-   - Default connection string format:
-   ```
-   postgresql://postgres:your_password@localhost:5432/tanzania_tech_nexus
-   ```
-
-   **Option B: Using a cloud database (Supabase, Railway, etc.)**
-   - Get your connection string from your database provider
-   - It should look like:
-   ```
-   postgresql://user:password@host:port/database
-   ```
-
-**Troubleshooting Database Connection:**
-- If you see "role does not exist" error, check your PostgreSQL username in the DATABASE_URL
-- Make sure PostgreSQL is running: `pg_isready` or check your PostgreSQL service
-- Verify the database exists: `psql -U postgres -l` (lists all databases)
-- Test connection: `psql -U postgres -d tanzania_tech_nexus`
-
-4. Start the server:
 ```bash
+npm install
+cp .env.example .env
+# Add your environment variables
 npm run dev
 ```
 
-The server will automatically run database migrations on startup.
+## 📊 Features
 
-## API Endpoints
+- 🔐 JWT Authentication
+- 📱 RESTful API
+- 💬 WebSocket Chat
+- 📚 Swagger Documentation
+- 🗄️ PostgreSQL Database
+- 📁 File Upload Support
+- 👤 Role-based Access Control
 
-### Authentication
-- `POST /api/auth/signup` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
+## 🛡️ Security
 
-### Products
-- `GET /api/products` - Get all products (with filters)
-- `GET /api/products/featured` - Get featured products
-- `GET /api/products/:id` - Get single product
-- `POST /api/products` - Create product (admin only)
-- `PUT /api/products/:id` - Update product (admin only)
-- `DELETE /api/products/:id` - Delete product (admin only)
+- Password hashing with bcrypt
+- JWT token authentication
+- Input validation
+- SQL injection prevention
+- CORS protection
 
-### Categories
-- `GET /api/categories` - Get all categories
-- `GET /api/categories/:id` - Get single category
-- `POST /api/categories` - Create category (admin only)
-- `PUT /api/categories/:id` - Update category (admin only)
-- `DELETE /api/categories/:id` - Delete category (admin only)
+## 📈 Endpoints
 
-### Orders
-- `GET /api/orders` - Get all orders (user's own or all if admin)
-- `GET /api/orders/:id` - Get single order
-- `POST /api/orders` - Create order
-- `PATCH /api/orders/:id/status` - Update order status (admin only)
-- `PATCH /api/orders/:id/tracking` - Update order tracking (admin only)
+- **Auth:** `/api/auth/*`
+- **Products:** `/api/products/*`
+- **Orders:** `/api/orders/*`
+- **Categories:** `/api/categories/*`
+- **Reviews:** `/api/reviews/*`
+- **Chat:** `/api/chat/*`
+- **Admin:** `/api/admin/*`
 
-### Reviews
-- `GET /api/reviews` - Get all reviews (admin only)
-- `GET /api/reviews/product/:productId` - Get reviews for a product
-- `POST /api/reviews` - Create review
-- `DELETE /api/reviews/:id` - Delete review
-
-### Chat
-- `GET /api/chat` - Get all messages
-- `POST /api/chat` - Send message
-
-### Coupons
-- `GET /api/coupons/active` - Get active coupons
-- `GET /api/coupons` - Get all coupons (admin only)
-- `POST /api/coupons/validate` - Validate coupon
-- `POST /api/coupons` - Create coupon (admin only)
-- `DELETE /api/coupons/:id` - Delete coupon (admin only)
-
-### Profiles
-- `GET /api/profiles/me` - Get current user's profile
-- `PUT /api/profiles/me` - Update current user's profile
-
-### Admin
-- `GET /api/admin/stats` - Get dashboard statistics
-- `GET /api/admin/customers` - Get all customers
-
-## WebSocket
-
-WebSocket server is available at `ws://localhost:3001/ws` for real-time chat functionality.
-
-Connect with authentication token:
-```
-ws://localhost:3001/ws?token=YOUR_JWT_TOKEN
-```
+**Full documentation at `/api-docs`**
